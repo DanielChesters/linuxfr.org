@@ -52,7 +52,7 @@ end
 namespace :fs do
   desc "[internal] Install some symlinks to share files between deploys."
   task :symlink, :roles => :app, :except => { :no_release => true } do
-    symlinks = %w(config/database.yml sockets)
+    symlinks = %w(config/database.yml tmp/sockets)
     symlinks.each do |symlink|
       run "ln -nfs #{shared_path}/#{symlink} #{release_path}/#{symlink}"
     end
@@ -60,7 +60,7 @@ namespace :fs do
 
   desc "[internal] Create the shared directories"
   task :create_dirs, :roles => :app do
-    run "test -d #{shared_path}/sockets || mkdir #{shared_path}/sockets"
+    run "mkdir -p #{shared_path}/tmp/sockets"
   end
 end
 after "deploy:finalize_update", "fs:symlink"
@@ -79,18 +79,18 @@ end
 # The hard-core deployment rules
 namespace :deploy do
   task :start, :roles => :app do
-    run "unicorn -c #{release_path}/config/unicorn.rb -E #{rails_env} -D"
+    run "unicorn -c #{current_path}/config/unicorn.rb -E #{rails_env} -D"
   end
 
   task :stop, :rules => :app do
-    pid = File.read("#{shared_path}/pids/unicorn.pid").chomp
-    run "kill -QUIT #{pid}"
+    set :unicorn_pid, capture("cat #{shared_path}/pids/unicorn.pid").chomp
+    run "kill -QUIT #{unicorn_pid}"
   end
 
   task :restart, :roles => :app, :except => { :no_release => true }  do
-    pid = File.read("#{shared_path}/pids/unicorn.pid").chomp
-    run "kill -USR2 #{pid}"
+    set :unicorn_pid, capture("cat #{shared_path}/pids/unicorn.pid").chomp
+    run "kill -USR2 #{unicorn_pid}"
     sleep 1
-    run "kill -QUIT #{pid}"
+    run "kill -QUIT #{unicorn_pid}"
   end
 end

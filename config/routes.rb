@@ -80,8 +80,8 @@ LinuxfrOrg::Application.routes.draw do
   get "/recherche" => "search#google", :as => :search
 
   # Redaction
+  get "/redaction" => "redaction#index"
   namespace :redaction do
-    # TODO Rails3.rc root :to => "index"
     resources :news, :except => [:new, :destroy] do
       post :submit, :on => :member
       resources :links, :only => [:new, :create]
@@ -91,8 +91,8 @@ LinuxfrOrg::Application.routes.draw do
   end
 
   # Moderation
+  get "/moderation" => "moderation#index"
   namespace :moderation do
-    # TODO Rails3.rc root :to => "index"
     resources :news, :except => [:new, :create, :destroy] do
       post :accept, :on => :member
       post :refuse, :on => :member
@@ -106,8 +106,8 @@ LinuxfrOrg::Application.routes.draw do
   end
 
   # Admin
+  get "/admin" => "admin#index"
   namespace :admin do
-    # TODO Rails3.rc root :to => "index"
     resources :comptes, :controller => "accounts", :as => "accounts", :only => [:index, :update, :destroy]
     resources :reponses, :controller => "responses", :as => "responses", :except => [:show]
     resources :sections, :except => [:show]

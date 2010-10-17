@@ -23,7 +23,7 @@ stderr_path "#{shared}/log/unicorn.log"
 pid "#{shared}/pids/unicorn.pid"
 
 # Listen on a Unix data socket
-listen "#{shared}/sockets/#{rails_env}.sock"
+listen "#{shared}/tmp/sockets/#{rails_env}.sock"
 
 
 before_fork do |server, worker|
@@ -33,5 +33,8 @@ end
 
 after_fork do |server, worker|
   ActiveRecord::Base.establish_connection
-  $redis.reconnect
+
+  # Don't share the redis connections
+  $redis = Redis.connect
+  Rails.cache.instance_variable_get(:@data).client.reconnect
 end
