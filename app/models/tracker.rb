@@ -53,7 +53,7 @@ class Tracker < Content
 
 ### Workflow ###
 
-  States = {'Ouvert' => :opened, 'Corrigé' => :fix, 'Invalide' => :invalid}.freeze
+  States = { "opened" => "Ouverte", "fixed" => "Corrigée", "invalid" => "Invalide" }.freeze
 
   state_machine :state, :initial => :opened do
     event :fix        do transition :opened => :fixed   end
@@ -62,6 +62,10 @@ class Tracker < Content
   end
 
 ### Presentation ###
+
+  def state_name
+    States[state].downcase
+  end
 
   def category_title
     category.try(:title) || 'Suivi'
@@ -77,20 +81,20 @@ class Tracker < Content
 
 ### ACL ###
 
-  def creatable_by?(user)
+  def creatable_by?(account)
     true
   end
 
-  def updatable_by?(user)
-    user && (user.moderator? || user.admin?)
+  def updatable_by?(account)
+    account && (account.moderator? || account.admin?)
   end
 
-  def destroyable_by?(user)
-    user && (user.moderator? || user.admin?)
+  def destroyable_by?(account)
+    account && (account.moderator? || account.admin?)
   end
 
-  def commentable_by?(user)
-    user && viewable_by?(user)
+  def commentable_by?(account)
+    account && viewable_by?(account)
   end
 
 end

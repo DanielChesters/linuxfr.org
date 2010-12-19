@@ -14,7 +14,7 @@ class TrackersController < ApplicationController
 
   def comments
     @comments = Comment.published.joins(:node).where('nodes.content_type' => 'Tracker').limit(20)
-    @title    = 'le tracker'
+    @feed_for = 'le tracker'
     respond_to do |wants|
       wants.atom { render 'comments/index' }
     end
@@ -34,7 +34,7 @@ class TrackersController < ApplicationController
     @tracker = Tracker.new
     enforce_create_permission(@tracker)
     @tracker.attributes = params[:tracker]
-    @tracker.owner_id = current_user.id
+    @tracker.owner_id = current_user.try(:id)
     if !preview_mode && @tracker.save
       redirect_to @tracker, :notice => "Votre entrée a bien été créée dans le suivi"
     else
@@ -49,7 +49,7 @@ class TrackersController < ApplicationController
 
   def update
     enforce_update_permission(@tracker)
-    @tracker.attributes = params[:tracker]
+    @tracker.send(:attributes=, params[:tracker], false) # Bypass the attr_accessible sanitizing
     @tracker.assigned_to_user = current_user
     if !preview_mode && @tracker.save
       redirect_to trackers_url, :notice => "Entrée du suivi modifiée"
@@ -67,7 +67,7 @@ class TrackersController < ApplicationController
 protected
 
   def marked_as_read
-    current_user.read(@tracker.node)
+    current_account.read(@tracker.node)
   end
 
   def load_tracker

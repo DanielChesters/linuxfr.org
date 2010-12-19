@@ -1,3 +1,5 @@
+# encoding: UTF-8
+#
 # == Schema Information
 #
 # Table name: wiki_pages
@@ -22,13 +24,6 @@ class WikiPage < Content
   validates :body,  :presence => { :message => "Le corps est obligatoire" }
 
   scope :sorted, order('created_at DESC')
-
-### Associated node ###
-
-  def create_node(attrs={}, replace_existing=true)
-    self.cc_licensed = true
-    super
-  end
 
 ### SEO ###
 
@@ -58,7 +53,16 @@ class WikiPage < Content
 
   after_save :create_new_version
   def create_new_version
+    message ||= "révision n°#{versions.count + 1}"
     versions.create(:user_id => user_id, :body => wiki_body, :message => message)
+  end
+
+### Associated node ###
+
+  def create_node(attrs={}, replace_existing=true)
+    self.cc_licensed = true
+    self.owner_id = user_id
+    super
   end
 
 ### HomePage ###
@@ -74,20 +78,20 @@ class WikiPage < Content
 
 ### ACL ###
 
-  def creatable_by?(user)
-    user && user.account.karma > 0
+  def creatable_by?(account)
+    account && account.karma > 0
   end
 
-  def updatable_by?(user)
-    user
+  def updatable_by?(account)
+    account
   end
 
-  def destroyable_by?(user)
-    user && user.amr?
+  def destroyable_by?(account)
+    account && account.amr?
   end
 
-  def commentable_by?(user)
-    user && viewable_by?(user)
+  def commentable_by?(account)
+    account && viewable_by?(account)
   end
 
 ### Interest ###

@@ -10,18 +10,22 @@ class TagsController < ApplicationController
 
   def new
     @tag = @node.tags.build
+    render :partial => 'form' if request.xhr?
   end
 
   def create
-    current_user.tag(@node, params[:tags])
-    redirect_to_content @node.content
+    current_account.tag(@node, params[:tags])
+    respond_to do |wants|
+     wants.html { redirect_to_content @node.content }
+     wants.js { render :nothing => true }
+    end
   end
 
   # Show all the nodes tagged by the current user
   def index
     @nodes = Node.paginate(:select => "DISTINCT nodes.*",
                            :joins => [:taggings],
-                           :conditions => {"taggings.user_id" => current_user.id,
+                           :conditions => {"taggings.user_id" => current_account.user_id,
                                            "nodes.public"     => true},
                            :order => @order,
                            :page => params[:page],
@@ -32,7 +36,7 @@ class TagsController < ApplicationController
   def show
     @nodes = Node.paginate(:select => "DISTINCT nodes.*",
                            :joins => [:taggings],
-                           :conditions => {"taggings.user_id" => current_user.id,
+                           :conditions => {"taggings.user_id" => current_account.user_id,
                                            "taggings.tag_id"  => @tag.id,
                                            "nodes.public"     => true},
                            :order => @order,
@@ -43,7 +47,7 @@ class TagsController < ApplicationController
   # Show all the nodes tagged with the given tag
   def public
     @order = (params[:order] || "created_at") + " DESC"
-    @nodes = @tag.nodes.paginate(:page => params[:page], :per_page => 15, :order => @order)
+    @nodes = @tag.nodes.where("nodes.public" => true).paginate(:page => params[:page], :per_page => 15, :order => @order)
   end
 
 protected
@@ -54,7 +58,7 @@ protected
   end
 
   def find_tag
-    @tag = Tag.find_by_name(params[:id])
+    @tag = Tag.find_or_initialize_by_name(params[:id])
   end
 
   def get_order

@@ -6,6 +6,8 @@ class ApplicationController < ActionController::Base
   before_filter :seo_filter
   helper_method :mobile?, :url_for_content, :current_user
 
+  VALID_ORDERS = %w(created_at score interest last_commented_at)
+
 protected
 
   def seo_filter
@@ -46,33 +48,32 @@ protected
 ### Authentication & authorizations ###
 
   def current_user
-    return @current_user if defined?(@current_user)
-    @current_user = current_account && current_account.user
+    current_account.try(:user)
   end
 
   def admin_required
-    return if current_user && current_user.admin?
+    return if current_account && current_account.admin?
     store_location!(:account)
     redirect_to new_account_session_url, :alert => "Vous ne possédez pas les droits nécessaires pour accéder à cette partie du site"
   end
 
   def amr_required
-    return if current_user && current_user.amr?
+    return if current_account && current_account.amr?
     store_location!(:account)
     redirect_to new_account_session_url, :alert => "Vous ne possédez pas les droits nécessaires pour accéder à cette partie du site"
   end
 
   def writer_required
-    return if current_user && (current_user.writer? || current_user.amr?)
+    return if current_account && (current_account.writer? || current_account.amr?)
     store_location!(:account)
     redirect_to new_account_session_url, :alert => "Vous ne possédez pas les droits nécessaires pour accéder à cette partie du site"
   end
 
   def enforce_view_permission(resource)
-    raise Canable::Transgression unless resource.viewable_by?(current_user)
+    raise Canable::Transgression unless resource.viewable_by?(current_account)
   end
 
   def store_location!(scope)
-    session[:"#{scope}_return_to"] = attempted_path if request && request.get?
+    session[:"#{scope}_return_to"] = url_for() if request && request.get?
   end
 end

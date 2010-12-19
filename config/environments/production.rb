@@ -17,7 +17,10 @@ LinuxfrOrg::Application.configure do
   # config.logger = SyslogLogger.new
 
   # Use a different cache store in production
-  config.cache_store = :redis_store, "redis://linuxfr.org:6379/0"
+  config.cache_store = :redis_store, "redis://linuxfr.org:6379/0/cache"
+
+  # Set the page cache directory
+  config.action_controller.page_cache_directory = "#{Rails.public_path}/pages"
 
   # Disable Rails's static asset server
   # In production, Apache or nginx will already do this
@@ -29,6 +32,8 @@ LinuxfrOrg::Application.configure do
   # Disable delivery errors, bad email addresses will be ignored
   # config.action_mailer.raise_delivery_errors = false
   config.action_mailer.default_url_options = { :host => MY_DOMAIN }
+  config.action_mailer.delivery_method     = :sendmail
+  config.action_mailer.sendmail_settings   = { :location  => "/usr/sbin/sendmail" }
 
   # Send deprecation notices to registered listeners
   config.active_support.deprecation = :notify

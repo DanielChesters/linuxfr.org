@@ -1,6 +1,6 @@
 = messages_on_error @news
 
-- unless current_user
+- unless current_account
   %p
     = form.label :author_name, "Votre nom"
     = form.text_field :author_name, :autocomplete => 'on', :required => 'required'
@@ -11,7 +11,7 @@
   = form.label :title, "Titre de la dépêche"
   = form.text_field :title, :autocomplete => 'off', :required => 'required', :spellcheck => 'true'
 %p
-  = form.label :section, "Section de la dépêche"
+  = form.label :section_id, "Section de la dépêche"
   = form.collection_select :section_id, Section.published, :id, :title
 %p
   = form.label :wiki_body, "Contenu de la dépêche"
@@ -38,5 +38,5 @@
   <br/>
   = form.text_area :message, :spellcheck => 'true'
 %p
-  = form.submit "Prévisualiser"
+  = form.submit "Prévisualiser", :id =>  "news_preview"
   = form.submit "Soumettre cette dépêche" if @preview_mode

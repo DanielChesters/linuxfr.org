@@ -17,13 +17,12 @@ module LinuxfrOrg
     end
 
     config.after_initialize do
-      ActionView::Base.sanitized_allowed_attributes.merge %w(data-id data-after)
+      ActionView::Base.sanitized_allowed_attributes.merge %w(id data-id data-after)
       ActiveSupport::XmlMini.backend = "Nokogiri"
     end
 
-    config.filter_parameters += [:password, :password_confirmation]
-
     config.encoding = "utf-8"
+    config.time_zone = 'Paris'
 
     config.session_store :cookie_store, :key => '_linuxfr.org_session'
   end

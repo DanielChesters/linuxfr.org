@@ -71,11 +71,11 @@ end
 Account.reset_column_information
 anon = Account.new
 anon.login = "Anonyme"
+anon.role  = "inactive"
 anon.email = "anonyme@linuxfr.org"
 anon.encrypted_password = "XXX"
 anon.skip_confirmation!
 anon.save
-anon.user.update_attribute(:role, 'inactive')
 
 # Wiki
 wp = WikiPage.new
@@ -88,7 +88,7 @@ Fonctionnement
 --------------
 
 Cet espace est un [wiki](http://fr.wikipedia.org/wiki/Wiki), c'est-à-dire un endroit où tous les utilisateurs (du moins, ceux qui sont authentifiés) peuvent écrire.
-Pour créer une page, le plus simple est de faire un lien vers cette page en utilisant la syntaxe `[``[MaPage]``]` puis de cliquer sur ce lien.
+Pour créer une page, le plus simple est de faire un lien vers cette page en utilisant la syntaxe `[[`MaPage`]]` puis de cliquer sur ce lien.
 Si la page n'existe pas encore, un formulaire vous sera proposée pour la créer.
 
 Les pages principales

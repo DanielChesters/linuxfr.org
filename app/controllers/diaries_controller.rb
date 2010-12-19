@@ -1,16 +1,18 @@
 # encoding: UTF-8
 class DiariesController < ApplicationController
-  caches_page :index, :if => Proc.new { |c| c.request.format.atom? }
-  caches_action :show, :unless => :account_signed_in?, :expires_in => 1.hour
   before_filter :authenticate_account!, :except => [:index, :show]
   before_filter :find_diary, :except => [:index, :new, :create]
   after_filter  :marked_as_read, :only => [:show], :if => :account_signed_in?
+  after_filter  :expire_cache, :only => [:create, :update, :destroy]
+  caches_page   :index, :if => Proc.new { |c| c.request.format.atom? }
+  caches_action :show, :unless => :account_signed_in?, :expires_in => 1.hour
   respond_to :html, :atom
 
 ### Global ###
 
   def index
-    @order = params[:order] || 'created_at'
+    @order = params[:order]
+    @order = "created_at" unless VALID_ORDERS.include?(@order)
     @nodes = Node.public_listing(Diary, @order).paginate(:page => params[:page], :per_page => 10)
     respond_with(@nodes)
   end
@@ -67,7 +69,11 @@ protected
   end
 
   def marked_as_read
-    current_user.read(@diary.node)
+    current_account.read(@diary.node)
   end
 
+  def expire_cache
+    expire_page :action => :index, :format => :atom
+    expire_action :action => :show, :id => @diary, :user_id => @diary.owner unless @diary.new_record?
+  end
 end

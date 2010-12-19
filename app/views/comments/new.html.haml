@@ -1,9 +1,15 @@
-=h1 "Écrire un commentaire"
+#contents
+  =h1 "Écrire un commentaire"
 
-= render "preview", :preview => @comment if @preview_mode
+  - if @comment.parent
+    %ul.threads
+      %li.comment{comment_attr(@comment.parent)}
+        = render @comment.parent
 
-= form_for [@node, @comment] do |form|
-  = form.hidden_field :parent_id
-  = render form
+  = render "preview", :preview => @comment if @preview_mode
 
-= render 'shared/wiki_help'
+  = form_for [@node, @comment] do |form|
+    = form.hidden_field :parent_id
+    = render form
+
+  = render 'shared/wiki_help'

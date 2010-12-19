@@ -28,7 +28,7 @@ describe News do
   end
 
   context "when created in redaction" do
-    let(:news) { News.create_for_redaction(Factory.create :writer) }
+    let(:news) { News.create_for_redaction(Factory.create :writer_account) }
 
     it "has two paragraphs, one in each part" do
       news.should have(2).paragraphs
@@ -37,6 +37,7 @@ describe News do
     end
 
     it "has a body and a second part" do
+      news.should have(0).errors
       news.body =~ /Vous pouvez éditer/
       news.second_part =~ /Vous pouvez éditer/
     end

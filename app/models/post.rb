@@ -9,7 +9,6 @@
 #  wiki_body      :text
 #  truncated_body :text
 #  forum_id       :integer(4)
-#  owner_id       :integer(4)
 #  created_at     :datetime
 #  updated_at     :datetime
 #
@@ -19,7 +18,6 @@
 #
 class Post < Content
   belongs_to :forum
-  belongs_to :owner, :class_name => 'User'
 
   attr_accessible :title, :wiki_body, :forum_id
 
@@ -41,7 +39,7 @@ class Post < Content
 # TODO Thinking Sphinx
 #   define_index do
 #     indexes title, body
-#     indexes owner.name, :as => :user
+#     indexes user.name, :as => :user
 #     indexes forum.title, :as => :forum, :facet => true
 #     where "posts.state = 'published'"
 #     set_property :field_weights => { :title => 10, :user => 4, :body => 2, :forum => 3 }
@@ -50,12 +48,12 @@ class Post < Content
 
 ### ACL ###
 
-  def updatable_by?(user)
-    user && (user.id == user_id || user.moderator? || user.admin?)
+  def updatable_by?(account)
+    account && (node.user_id == account.user_id || account.moderator? || account.admin?)
   end
 
-  def destroyable_by?(user)
-    user && (user.moderator? || user.admin?)
+  def destroyable_by?(account)
+    account && (account.moderator? || account.admin?)
   end
 
 end

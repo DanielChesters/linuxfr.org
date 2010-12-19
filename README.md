@@ -23,9 +23,15 @@ you are free to choose your camp.
     # aptitude install build-essential libxslt1-dev libxml2-dev
     # aptitude install aspell libaspell-dev aspell-fr
 
-2) Install rubygems from source (the debian version is too old).
-You can follow instructions of
+2) Install rubygems
+
+The rubygems package for debian lenny is too old. You can install it from
+sources, by following the instructions of
 http://railstips.org/blog/archives/2008/11/24/rubygems-yours-mine-and-ours/
+
+On later debians, just do:
+
+    # aptitude install rubygems
 
 3) Configure the database:
 
@@ -36,9 +42,9 @@ http://railstips.org/blog/archives/2008/11/24/rubygems-yours-mine-and-ours/
 
 4) Install and start redis:
 
-    $ wget "http://redis.googlecode.com/files/redis-2.0.1.tar.gz"
-    $ tar xvzf redis-2.0.1.tar.gz
-    $ cd redis-2.0.1
+    $ wget "http://redis.googlecode.com/files/redis-2.0.4.tar.gz"
+    $ tar xvzf redis-2.0.4.tar.gz
+    $ cd redis-2.0.4
     $ make
     $ ./redis-server redis.conf
 
@@ -47,13 +53,14 @@ http://railstips.org/blog/archives/2008/11/24/rubygems-yours-mine-and-ours/
     $ git clone git://github.com/nono/linuxfr.org.git
     $ cd linuxfr.org
     $ cp config/database.yml{.sample,}
+    $ cp config/secret.yml{.sample,}
     $ gem install bundler rake
     $ bundle install
     $ rake db:setup
 
 6) Let's run it:
 
-    $ rails server
+    $ bundle exec rails server thin
     $ firefox http://127.0.0.1:3000/
 
 

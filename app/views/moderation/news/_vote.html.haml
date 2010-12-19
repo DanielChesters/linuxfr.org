@@ -1,24 +1,35 @@
 #news_vote
   %h1 Votes
   %p
+    Nombres n de modérateurs : #{Account.amr.count}
+    %br
+    Seuil d'acceptation (n/5) : &gt; #{News.accept_threshold}
+    %br
+    Seuil de refus (n/4) : &lt; #{News.refuse_threshold}
+  %p
     %strong Pour :
     = @news.node.voters_for
   %p
     %strong Contre :
     = @news.node.voters_against
+  - if current_account.can_vote?(@news)
+    %div
+      = button_to "Pour", "/nodes/#{@news.node.id}/vote/for", :remote => true
+      ou
+      = button_to "Contre", "/nodes/#{@news.node.id}/vote/against", :remote => :true
 
   - if @news.published?
     %p
       %strong Dépêche publiée
     - if @news.on_ppp?
       %strong Affichée en phare
-    - elsif current_user.can_ppp?(@news)
+    - elsif current_account.can_ppp?(@news)
       = button_to "Mettre en phare", ppp_moderation_news_path(@news)
   - elsif @news.refused?
     %p
       %strong Dépêche refusée
   - else
-    - if current_user.can_accept?(@news)
+    - if current_account.can_accept?(@news)
       = button_to "Publier", accept_moderation_news_path(@news)
-    - if current_user.can_refuse?(@news)
+    - if current_account.can_refuse?(@news)
       = button_to "Refuser", refuse_moderation_news_path(@news)

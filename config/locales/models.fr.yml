@@ -15,10 +15,11 @@ fr:
       page: page
       paragraph: paragraphe
       poll: sondage
+      poll_answer: réponse
       post: message
       response: réponse
       section: section
       tracker: entrée du suivi
       user: utilisateur
-      wiki_page: page de wiki
-      wiki_version: version
+      wikipage: page de wiki
+      wikiversion: version

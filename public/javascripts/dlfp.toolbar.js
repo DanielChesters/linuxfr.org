@@ -1,5 +1,3 @@
-/*global jQuery, localStorage */ 
-
 (function($) {
     $.Toolbar = function(items, text, options){
         var base = this;
@@ -10,7 +8,8 @@
             base.current = 0;
             base.text = text;
             base.options = $.extend({}, $.Toolbar.defaultOptions, options);
-            base.threshold = localStorage.threshold || base.options.thresholds[0];
+            base.storage = ('localStorage' in window && window['localStorage'] !== null) ? window['localStorage'] : {};
+            base.threshold = base.storage.threshold || base.options.thresholds[0];
             base.folding();
             base.create();
         };
@@ -51,7 +50,7 @@
             if (base.nb_items === 0) { return ; }
             var item = base.items[base.current - 1];
             var pos = $(item).offset().top;
-            $('html').animate({scrollTop: pos}, 500);
+            $('html,body').animate({scrollTop: pos}, 500);
             $('#toolbar_current_item').text(base.current);
             return false;
         };
@@ -59,7 +58,7 @@
         base.change_threshold = function() {
             var ths = base.options.thresholds;
             var index = $.inArray(parseInt($(this).text(), 10), ths) + 1;
-            localStorage.threshold = base.threshold = ths[index % ths.length];
+            base.storage.threshold = base.threshold = ths[index % ths.length];
             $(this).text(base.threshold);
             base.folding();
             return false;
@@ -72,7 +71,7 @@
             items.each(function() {
                 var item  = $(this);
                 var score = parseInt(item.find('.score:first').text(), 10);
-                var link  = item.children('h3')
+                var link  = item.children('h2')
                                 .prepend('<a href="#" class="folding" title="Plier">[-]</a>')
                                 .children('.folding');
                 var fold  = function(b) {

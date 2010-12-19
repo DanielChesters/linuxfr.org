@@ -4,7 +4,7 @@ module NodeHelper
   ContentPresenter = Struct.new(:record, :title, :meta, :image, :body, :actions, :css_class) do
     def to_hash
       attrs = members.map(&:to_sym)
-      Hash[*attrs.zip(values).flatten]
+      Hash[*attrs.zip(values).flatten(1)]
     end
 
     def self.collection?
@@ -12,23 +12,25 @@ module NodeHelper
     end
 
     def self.collection(&blk)
-      was, @collection = @collection, true
-      ret = yield
-      @collection = was
-      ret
+      @collection = true
+      yield
+    ensure
+      @collection = false
     end
   end
 
   def article_for(record)
     cp = ContentPresenter.new
     cp.record = record
-    cp.css_class = 'content '
+    cp.css_class = %w(node)
+    score = [ [record.node.score / 5, -10].max, 10].min
+    cp.css_class << "score#{score}"
     cp.css_class << record.class.name.downcase
-    cp.css_class << ' new-content' if current_user && record.node.read_status(current_user) == :not_read
+    cp.css_class << 'new-node' if current_account && record.node.read_status(current_account) == :not_read
     yield cp
     cp.meta ||= posted_by(record)
     cp.body ||= sanitize(ContentPresenter.collection? ?
-                         record.truncated_body.sub("[...](suite)", link_to(" (...)", url_for_content(record))) :
+                         record.truncated_body.sub("[...](suite)", " " + link_to("(...)", url_for_content(record))) :
                          record.body)
     render 'nodes/content', cp.to_hash
   end
@@ -56,7 +58,7 @@ module NodeHelper
   end
 
   def paginated_section(args, link=nil, &block)
-    toolbox    = link ? content_tag(:div, link, :class => 'new-content') : ''.html_safe
+    toolbox    = link ? content_tag(:div, link, :class => 'new_content') : ''.html_safe
     order_bar  = render 'shared/order_navbar'
     pagination = will_paginate(args).to_s
     before = content_tag(:nav, toolbox + order_bar + pagination, :class => "toolbox")
@@ -71,18 +73,29 @@ module NodeHelper
   end
 
   def posted_by(content, user_link=nil)
-    user = content.user || current_user
-    user_link  ||= user ? link_to(user.name, user, :rel => 'author') : 'Anonyme'
-    date_time    = content.created_at || Time.now
-    published_at = content_tag(:time, date_time.to_s(:posted), :datetime => pubdate_for(content), :pubdate => "pubdate")
-    "Posté par #{user_link} le #{published_at}.".html_safe
+    user   = content.user
+    user ||= current_user if content.new_record?
+    user_link = 'Anonyme'
+    if user
+      user_link  = link_to(user.name, user, :rel => 'author')
+      user_infos = []
+      user_infos << link_to("page perso", user.homesite)             if user.homesite.present?
+      user_infos << link_to("jabber id", "xmpp://" + user.jabber_id) if user.jabber_id.present?
+      user_link += (" (" + user_infos.join(', ') + ")").html_safe    if user_infos.any?
+    end
+    date_time    = content.is_a?(Comment) ? content.created_at : content.node.try(:created_at)
+    date_time  ||= Time.now
+    date         = content_tag(:span, "le #{date_time.to_s(:date)}", :class => "date")
+    time         = content_tag(:span,  "à #{date_time.to_s(:time)}", :class => "time")
+    published_at = content_tag(:time, date + " " + time, :datetime => pubdate_for(content), :pubdate => "pubdate")
+    "Posté par #{user_link} #{published_at}.".html_safe
   end
 
   def read_it(content)
     link = link_to_unless_current("Lire la suite", url_for_content(content)) { "" }
     nb_comments = pluralize(content.node.try(:comments_count), "commentaire")
-    if current_user
-      visit = case content.node.read_status(current_user)
+    if current_account
+      visit = case content.node.read_status(current_account)
               when :not_read     then ", non visité"
               when :new_comments then ", Nouveaux !"
               else                    ", déjà visité"
@@ -91,4 +104,7 @@ module NodeHelper
     "#{link} (#{nb_comments}#{visit}).".html_safe
   end
 
+  def translate_content_type(content_type)
+    t "activerecord.models.#{content_type.downcase}"
+  end
 end

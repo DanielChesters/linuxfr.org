@@ -2,7 +2,7 @@ module ApplicationHelper
 
   def title(title, tag=nil)
     title = h(title)
-    @title << title
+    @title.unshift title
     content_tag(tag, title) if tag
   end
 
@@ -16,18 +16,9 @@ module ApplicationHelper
   end
 
   def meta_for(content)
-    @author      = content.user.name if content.respond_to?(:user) && content.user
-    @keywords   += content.node.popular_tags.map &:name
+    @author      = content.node.user.try(:name)
+    @keywords    = content.node.popular_tags.map &:name
     @description = content.title
-  end
-
-  def spellify(str)
-    return str unless defined? Aspell
-    speller = Aspell.new('fr_FR', nil, nil, 'utf-8')
-    speller.set_option('mode', 'html')
-    ary = [HTMLEntities.decode_entities(str)]
-    res = speller.correct_lines(ary) { |word| "<span class=\"misspelled\">#{word}</span>" }
-    res.first
   end
 
 end

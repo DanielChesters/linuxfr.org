@@ -1,4 +1,3 @@
-/*global jQuery */
 /* Adapted from http://github.com/rails/jquery-ujs */
 
 (function($) {
@@ -43,6 +42,12 @@
 
                 el.trigger('ajax:after');
             }
+        }
+    });
+
+    $('a[data-confirm], button[data-confirm], input[data-confirm]').live('click', function (e) {
+        if (!confirm($(this).attr('data-confirm'))) {
+            e.preventDefault();
         }
     });
 

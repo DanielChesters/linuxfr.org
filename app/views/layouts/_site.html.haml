@@ -1,6 +1,7 @@
 %nav#site
   .go_to_content
-    %a(href="#container") Aller au contenu
+    %a(href="#contents") Aller au contenu
+    %a(href="#sidebar") Aller au menu
   %ul
     %li= link_to "Accueil", '/'
     %li= link_to "Dépêches", '/news'
@@ -11,5 +12,6 @@
     %li= link_to "Suivi", '/suivi'
     %li= link_to "Plan", '/plan'
   = form_tag '/recherche', :method => :get, :target => "_blank" do
+    <label for="query" id="label_query">Recherche :</label>
     <input id="query" name="q" type="search" placeholder="Entrer un mot-clé" />
-    = submit_tag "Rechercher", :name => nil
+    = submit_tag "Rechercher", :name => nil, :id => "search_submit"

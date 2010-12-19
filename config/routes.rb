@@ -9,6 +9,7 @@ LinuxfrOrg::Application.routes.draw do
   get "/news(.:format)" => "news#index", :as => "news_index"
   resources :news, :only => [:show, :new, :create]
   get "/redirect/:id" => "links#show"
+  get "/:year/:month/:day" => "news#calendar", :year => /(19|20)\d{2}/, :month => /[01]?\d/, :day => /[0-3]?\d/
 
   # Diaries & Users
   resources :users, :only => [:show] do
@@ -55,8 +56,9 @@ LinuxfrOrg::Application.routes.draw do
 
   # Boards
   controller :boards do
+    get  "/board/index.xml" => :show, :format => :xml
+    get  "/board" => :show
     post "/board" => :create, :as => :board
-    get  "/board(.:format)" => :show
   end
 
   # Accounts
@@ -84,9 +86,9 @@ LinuxfrOrg::Application.routes.draw do
   namespace :redaction do
     resources :news, :except => [:new, :destroy] do
       post :submit, :on => :member
-      resources :links, :only => [:new, :create]
+      resources :links, :only => [:new]
     end
-    resources :links, :only => [:edit, :update]
+    resources :links, :only => [:create, :edit, :update]
     resources :paragraphs, :only => [:show, :edit, :update]
   end
 
@@ -126,6 +128,6 @@ LinuxfrOrg::Application.routes.draw do
   controller :static do
     get "/proposer-un-contenu" => :submit_content, :as => :submit_content
     get "/changelog" => :changelog, :as => :changelog
-    get "/:id" => :show, :as => :static, :constraints => { :id => /[a-z_]+/ }
+    get "/:id" => :show, :as => :static, :constraints => { :id => /[a-z_\-]+/ }
   end
 end

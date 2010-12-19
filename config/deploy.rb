@@ -12,7 +12,7 @@ default_run_options[:pty] = true # Temporary hack
 
 # We have two environments: alpha and production.
 # To make a deploy, precise on which environment, like this:
-#   $ cap production deploy
+#   $ cap env:production deploy
 namespace :env do
   desc "Alpha environment"
   task :alpha do
@@ -34,6 +34,7 @@ namespace :env do
     set :deploy_to,   "/data/#{vserver}/#{user}/#{rails_env}"
     server "#{user}@#{application}", :app, :web, :db, :primary => true
     depend :remote, :file, "#{shared_path}/config/database.yml"
+    depend :remote, :file, "#{shared_path}/config/secret.yml"
   end
 end
 after "env:alpha", "env:common"
@@ -52,7 +53,7 @@ end
 namespace :fs do
   desc "[internal] Install some symlinks to share files between deploys."
   task :symlink, :roles => :app, :except => { :no_release => true } do
-    symlinks = %w(config/database.yml tmp/sockets)
+    symlinks = %w(config/database.yml config/secret.yml public/pages tmp/sass-cache tmp/sockets)
     symlinks.each do |symlink|
       run "ln -nfs #{shared_path}/#{symlink} #{release_path}/#{symlink}"
     end
@@ -60,6 +61,8 @@ namespace :fs do
 
   desc "[internal] Create the shared directories"
   task :create_dirs, :roles => :app do
+    run "mkdir -p #{shared_path}/public/pages"
+    run "mkdir -p #{shared_path}/tmp/sass-cache"
     run "mkdir -p #{shared_path}/tmp/sockets"
   end
 end
@@ -79,7 +82,7 @@ end
 # The hard-core deployment rules
 namespace :deploy do
   task :start, :roles => :app do
-    run "unicorn -c #{current_path}/config/unicorn.rb -E #{rails_env} -D"
+    run "cd #{current_path} && bundle exec unicorn -c config/unicorn.rb -E #{rails_env} -D"
   end
 
   task :stop, :rules => :app do

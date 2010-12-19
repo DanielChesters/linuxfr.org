@@ -23,16 +23,14 @@
 # that will be reviewed and moderated by the LinuxFr.org team.
 #
 class News < Content
-  include Canable::Ables
-
   belongs_to :section
   belongs_to :moderator, :class_name => "User"
   has_many :links, :dependent => :destroy, :inverse_of => :news
   has_many :paragraphs, :dependent => :destroy, :inverse_of => :news
   accepts_nested_attributes_for :links, :allow_destroy => true,
-      :reject_if => proc { |attrs| attrs['title'].blank? && attrs['url'].blank? }
+    :reject_if => proc { |attrs| attrs['title'].blank? && attrs['url'].blank? }
   accepts_nested_attributes_for :paragraphs, :allow_destroy => true,
-      :reject_if => proc { |attrs| attrs['body'].blank? }
+    :reject_if => proc { |attrs| attrs['body'].blank? }
 
   attr_accessible :title, :section_id, :author_name, :author_email, :links_attributes, :paragraphs_attributes
 
@@ -92,9 +90,7 @@ class News < Content
   end
 
   def publish
-    node.public = true
-    node.created_at = DateTime.now
-    node.save
+    node.make_visible
     author = Account.find_by_email(author_email)
     author.give_karma(50) if author
     message = "<b>La dépêche a été publiée</b>"
@@ -111,13 +107,13 @@ class News < Content
     Board.create_for(self, :user => moderator, :kind => "moderation", :message => message)
   end
 
-  def self.create_for_redaction(user)
+  def self.create_for_redaction(account)
     news = News.new
     news.title = "Nouvelle dépêche #{News.maximum :id}"
     news.section = Section.published.first
     news.wiki_body = news.wiki_second_part = "Vous pouvez éditer cette partie en cliquant dessus !"
-    news.author_name  = user.name
-    news.author_email = user.email
+    news.author_name  = account.name
+    news.author_email = account.email
     news.save
     news
   end
@@ -143,8 +139,8 @@ class News < Content
 
   before_validation :put_paragraphs_together, :on => :update
   def put_paragraphs_together
-    self.wiki_body        = paragraphs.in_first_part.map(&:body).join
-    self.wiki_second_part = paragraphs.in_second_part.map(&:body).join
+    self.wiki_body        = paragraphs.in_first_part.map(&:wiki_body).join
+    self.wiki_second_part = paragraphs.in_second_part.map(&:wiki_body).join
   end
 
   before_validation :wikify_fields
@@ -173,7 +169,7 @@ class News < Content
 
   def create_node(attrs={}, replace_existing=true)
     account = Account.find_by_email(author_email)
-    self.owner_id = account.user_id if account
+    self.owner_id = account.try(:user_id)
     attrs[:public] = false
     super attrs, replace_existing
   end
@@ -181,44 +177,44 @@ class News < Content
 ### ACL ###
 
   def self.accept_threshold
-    User.amr.count / 5
+    Account.amr.count / 5
   end
 
   def self.refuse_threshold
-    -User.amr.count / 4
+    -Account.amr.count / 4
   end
 
-  def viewable_by?(user)
-    published? || (user && (user.amr? || (draft? && user.writer)))
+  def viewable_by?(account)
+    published? || (account && draft? && account.writer?) || account.try(:amr?)
   end
 
-  def creatable_by?(user)
+  def creatable_by?(account)
     true
   end
 
-  def updatable_by?(user)
-    return false unless user
-    published? ? (user.moderator? || user.admin?) : viewable_by?(user)
+  def updatable_by?(account)
+    return false unless account
+    published? ? (account.moderator? || account.admin?) : viewable_by?(account)
   end
 
-  def destroyable_by?(user)
-    user && (user.moderator? || user.admin?)
+  def destroyable_by?(account)
+    account && (account.moderator? || account.admin?)
   end
 
-  def acceptable_by?(user)
-    user && (user.moderator? || user.admin?) && score > News.accept_threshold
+  def acceptable_by?(account)
+    account && (account.moderator? || account.admin?) && score > News.accept_threshold
   end
 
-  def refusable_by?(user)
-    user && (user.moderator? || user.admin?) && score < News.refuse_threshold
+  def refusable_by?(account)
+    account && (account.moderator? || account.admin?) && score < News.refuse_threshold
   end
 
-  def pppable_by?(user)
-    user && (user.moderator? || user.admin?) && published?
+  def pppable_by?(account)
+    account && (account.moderator? || account.admin?) && published?
   end
 
-  def votable_by?(user)
-    super(user) || (user && user.amr? && !draft?)
+  def votable_by?(account)
+    super(account) || (account && account.amr? && !draft? && self.user != account.user)
   end
 
 ### Locks ###

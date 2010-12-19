@@ -1,5 +1,3 @@
-/*global jQuery, markItUpSettings */
-
 (function($) {
     $(".markItUp").markItUp(markItUpSettings);
 
@@ -15,13 +13,15 @@
     $("a.scroll").click(function() {
         var dst = $(this.hash);
         var pos = dst ? dst.offset().top : 0;
-        $('html').animate({scrollTop: pos}, 500);
+        $('html,body').animate({scrollTop: pos}, 500);
         return false;
     });
 
-    $('input.autocomplete').each(function() {
-        var input = $(this);
-        input.autocomplete(input.attr('data-url'), {multiple: true, multipleSeparator: ' '});
+    /* Force people to preview their modified contents */
+    $("textarea").change(function() {
+        $(this).parents("form")
+               .find("input[value=Prévisualiser]")
+               .next("input[type=submit]").hide();
     });
 
     /* Add/Remove dynamically links in the news form. */
@@ -52,21 +52,35 @@
     /* Show the toolbar */
     if ($('body').hasClass('logged')) {
         if ($('#comments').length > 0) {
-            $('#comments .new_comment').toolbar('Nouveaux commentaires', {folding: '#comments .comment'});
+            $('#comments .new-comment').toolbar('Nouveaux commentaires', {folding: '#comments .comment'});
         }
-        if ($('#contents').length > 0) {
-            $('#contents .new_content').toolbar('Contenus pas encore visités');
+        if ($('#contents .node').length > 1) {
+            $('#contents .new-node').toolbar('Contenus pas encore visités');
         }
     }
+
+    /* Redaction */
+    $('.edition_in_place').editionInPlace();
+    $('#redaction .link').editionInPlace();
+    $('#redaction .new_link').creationInPlace();
+
+    $('.tag_in_place').live('in_place:form', function() {
+        $('input.autocomplete').each(function() {
+            var input = $(this);
+            input.autocomplete(input.attr('data-url'), {multiple: true, multipleSeparator: ' '});
+        });
+    }).live('in_place:result', function() {
+        $.noticeAdd({text: "Tags ajoutés"});
+    }).editionInPlace();
 
     /* Hotkeys */
     $(document)
     .bind('keypress', 'g', function() {
-        $('html').animate({scrollTop: 0}, 500);
+        $('html,body').animate({scrollTop: 0}, 500);
         return false;
     })
     .bind('keypress', 'shift+g', function() {
-        $('html').animate({scrollTop: $('body').attr("scrollHeight")}, 500);
+        $('html,body').animate({scrollTop: $('body').attr("scrollHeight")}, 500);
         return false;
     })
     .bind('keypress', 'shift+?', function() {

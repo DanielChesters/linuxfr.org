@@ -20,6 +20,8 @@
 # A paragraph can be split in several if it has a blank line in its body.
 #
 class Paragraph < ActiveRecord::Base
+  include ERB::Util
+
   belongs_to :news
 
   attr_accessor   :user, :after, :already_split
@@ -30,8 +32,24 @@ class Paragraph < ActiveRecord::Base
 
 ### Automatically split paragraphs ###
 
+  # Split body in paragraphs, but preserve code!
   def split_body
-    wiki_body.scan /[^\r\n]+[\r\n]*/
+    parts   = []
+    codemap = {}
+    str = wiki_body.gsub(/^``` ?(.+?)\r?\n(.+?)\r?\n```\r?$/m) do
+      id = Digest::SHA1.hexdigest($2)
+      codemap[id] = $&.chomp
+      id + "\n"
+    end
+
+    until str.empty?
+      left, sep, str = str.partition(/(\r?\n){2}/)
+      left.sub!(/\A(\r?\n)+/, '')
+      codemap.each { |id,code| left.gsub!(id, code) }
+      parts << left + sep
+    end
+
+    parts
   end
 
   before_validation :split_on_create, :on => :create
@@ -64,6 +82,8 @@ class Paragraph < ActiveRecord::Base
       self.locked_by_id = nil
       save
     end
+    news.body = '' # Force the news to save even if no fields have changed
+    news.save
   end
 
 ### Wikify ###
@@ -109,7 +129,7 @@ class Paragraph < ActiveRecord::Base
     return false if locked?
     self.locked_by_id = user.id
     save
-    message = "<span class=\"paragraph\" data-id=\"#{self.id}\">#{user.name} édite le paragraph #{wiki_body[0,20]}</span>"
+    message = "<span class=\"paragraph\" data-id=\"#{self.id}\">#{user.name} édite le paragraphe #{html_escape wiki_body[0,20]}</span>"
     Board.create_for(news, :user => user, :kind => "locking", :message => message)
     true
   end

@@ -17,6 +17,11 @@ describe LFMarkdown do
     html.should == "<p><a href=\"http://fr.wikipedia.org/wiki/Linux\" title=\"Définition Wikipédia\">Linux</a></p>\n"
   end
 
+  it "transforms [[]] to wikipedia links, even with spaces and accents" do
+    html = LFMarkdown.new("[[Paul Erdős]]").to_html
+    html.should == "<p><a href=\"http://fr.wikipedia.org/wiki/Paul%20Erd%C5%91s\" title=\"Définition Wikipédia\">Paul Erdős</a></p>\n"
+  end
+
   it "leaves underscored words unchanged" do
     html = LFMarkdown.new("foo_bar_baz").to_html
     html.should == "<p>foo_bar_baz</p>\n"
@@ -45,6 +50,6 @@ class Ruby
 end
 ```
 EOS
-    md.to_html.should == "<p>Mon joli code :\n<div class=\"highlight\"><pre><span class=\"k\">class</span> <span class=\"nc\">Ruby</span>\n<span class=\"k\">end</span>\n</pre></div></p>\n"
+    md.to_html.should == "<p>Mon joli code :\n<pre><code class=\"ruby\"><span class=\"k\">class</span> <span class=\"nc\">Ruby</span>\n<span class=\"k\">end</span></code></pre></p>\n"
   end
 end

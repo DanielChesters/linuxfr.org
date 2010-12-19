@@ -11,10 +11,13 @@
     li {
       padding: 5px 0;
       color: $header_color;
-      font-size: 1.6em;
+      font-size: 1.4em;
       a {
         color: inherit;
         @include hover-link; } } }
   form {
     float: right;
     padding: 5px 10px; } }
+#label_query {
+  float: left;
+  @include hide-text; }

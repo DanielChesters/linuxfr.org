@@ -6,7 +6,8 @@ class PollsController < ApplicationController
   respond_to :html, :atom
 
   def index
-    @order = params[:order] || 'created_at'
+    @order = params[:order]
+    @order = "created_at" unless VALID_ORDERS.include?(@order)
     @polls = Poll.archived.joins(:node).order("nodes.#{@order} DESC").paginate(:page => params[:page], :per_page => 10)
     if on_the_first_page?
       poll = Poll.current
@@ -29,6 +30,7 @@ class PollsController < ApplicationController
     @poll = Poll.new
     enforce_create_permission(@poll)
     @poll.attributes = params[:poll]
+    @poll.owner_id = current_account.user_id
     if !preview_mode && @poll.save
       redirect_to polls_url, :notice => "L'équipe de modération de LinuxFr.org vous remercie pour votre proposition de sondage"
     else
@@ -56,7 +58,7 @@ protected
   end
 
   def marked_as_read
-    current_user.read(@poll.node)
+    current_account.read(@poll.node)
   end
 
   def enforce_answer_permission(poll)

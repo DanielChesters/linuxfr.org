@@ -1,15 +1,18 @@
 - preview.wikify_body
 %ul
-  %li#comment_new.comment
-    %h3
-      = preview.title
-    %p
+  %li#comment_new.comment.score1
+    %h2
+      = link_to preview.title, "#", :class => "title"
+    %p.meta
       = posted_by(preview)
       Évalué à
       %span.score= preview.score
     %figure.image
       = avatar_url(current_user)
     .content
-      = sanitize(spellify preview.body)
-    %footer
+      = sanitize(preview.body)
+    %footer.actions
       &nbsp;
+
+- if preview.parent.try(:user_id) == current_account.user_id
+  = image_tag "dessins/geekscottes_005.png", :alt => "Autosatisfaction récursive", :title => "Autosatisfaction récursive - © Johann 'nojhan' Dréo : 2005-03-25 - Licence CC By-Sa 2.5"
