@@ -27,7 +27,11 @@ class WikiPage < Content
 
 ### SEO ###
 
-  has_friendly_id :title, :use_slug => true, :reserved_words => %w(index nouveau)
+  has_friendly_id :title, :use_slug => true, :reserved_words => %w(index nouveau modifications pages)
+
+  def normalize_friendly_id(string)
+    string.to_ascii.word_chars.clean.truncate_bytes(150).with_separators.to_s
+  end
 
 ### Sphinx ####
 
@@ -47,7 +51,8 @@ class WikiPage < Content
 
   before_validation :wikify_body
   def wikify_body
-    txt = wiki_body.gsub(/\[\[(\w+)\]\]/, '[\1](/wiki/\1 "Lien interne du wiki LinuxFr.org")')
+    return unless wiki_body
+    txt = wiki_body.gsub(/\[\[\[(\w+)\]\]\]/, '[\1](/wiki/\1 "Lien interne du wiki LinuxFr.org")')
     self.body = wikify(txt)
   end
 

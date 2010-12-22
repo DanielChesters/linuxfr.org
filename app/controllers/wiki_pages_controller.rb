@@ -1,6 +1,6 @@
 # encoding: UTF-8
 class WikiPagesController < ApplicationController
-  before_filter :authenticate_account!, :except => [:index, :show, :revision, :changes]
+  before_filter :authenticate_account!, :except => [:index, :show, :revision, :changes, :pages]
   before_filter :load_wiki_page, :only => [:edit, :update, :destroy, :revision]
   after_filter  :marked_as_read, :only => [:show], :if => :account_signed_in?
 
@@ -12,23 +12,20 @@ class WikiPagesController < ApplicationController
   end
 
   def show
-    begin
-      @wiki_page = WikiPage.find(params[:id])
-    rescue ActiveRecord::RecordNotFound
-      if current_account
-        new
-        @wiki_page.title = params[:id].titleize
-        render :new
-      else
-        render :not_found
-      end
-      return
-    end
+    @wiki_page = WikiPage.find(params[:id])
+    enforce_view_permission(@wiki_page)
     redirect_to @wiki_page, :status => 301 if !@wiki_page.friendly_id_status.best?
+  rescue ActiveRecord::RecordNotFound
+    if current_account
+      redirect_to new_wiki_page_url(:title => params[:id].titleize)
+    else
+      render :not_found
+    end
   end
 
   def new
     @wiki_page = WikiPage.new
+    @wiki_page.title = params[:title]
     enforce_create_permission(@wiki_page)
   end
 
@@ -83,10 +80,16 @@ class WikiPagesController < ApplicationController
     end
   end
 
+  def pages
+    @order = params[:order]
+    @order = "created_at" unless VALID_ORDERS.include?(@order)
+    @nodes = Node.public_listing(WikiPage, @order).paginate(:page => params[:page], :per_page => 10)
+  end
+
 protected
 
   def marked_as_read
-    current_account.read(@wiki_page.node) if @wiki_page.node
+    current_account.read(@wiki_page.node) if @wiki_page.try(:node)
   end
 
   def load_wiki_page
